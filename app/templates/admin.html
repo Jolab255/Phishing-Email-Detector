@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Phishing Detector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-5 animate-fade-in">
+            <div>
+                <h1 class="fw-bold mb-0">Admin <span class="text-primary">Console</span></h1>
+                <p class="text-muted">Manage user verification and access</p>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary d-flex align-items-center gap-2">
+                <i data-lucide="arrow-left"></i> Back to Home
+            </a>
+        </div>
+
+        <div class="glass-card p-4 mb-4 bg-primary bg-opacity-10 border-primary border-opacity-25 animate-fade-in">
+            <h5 class="fw-bold d-flex align-items-center gap-2">
+                <i data-lucide="info" class="text-primary"></i> Administrator Instructions
+            </h5>
+            <p class="text-muted small mb-3">To allow new users to link their Gmail accounts, you <strong>must</strong> manually add them as "Test Users" in the Google Cloud Console. Otherwise, Google will block their access with a "Verification required" error.</p>
+            <ol class="small text-muted mb-0">
+                <li>Go to the <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" class="fw-bold text-primary text-decoration-underline">OAuth Consent Screen</a> in your Google Cloud Project.</li>
+                <li>Scroll down to the <strong>"Test users"</strong> section.</li>
+                <li>Click <strong>"+ ADD USERS"</strong> and enter the user's Gmail address.</li>
+                <li>Once added in Google Console, click <strong>"Verify"</strong> in the list below to grant them access to this app.</li>
+            </ol>
+        </div>
+
+        <div class="glass-card p-4 animate-fade-in">
+            <h5 class="fw-bold mb-4">Registered Users</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Role</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td class="fw-bold">{{ user.username }}</td>
+                            <td class="text-muted">{{ user.email }}</td>
+                            <td>
+                                {% if user.is_verified %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">VERIFIED</span>
+                                {% else %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill">PENDING</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_admin %}
+                                    <span class="badge bg-primary px-3 py-2 rounded-pill">ADMIN</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill border">USER</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if user.id != current_user.id %}
+                                <a href="{{ url_for('verify_user', user_id=user.id) }}" class="btn btn-sm {% if user.is_verified %}btn-outline-danger{% else %}btn-primary{% endif %} rounded-4 px-4">
+                                    {% if user.is_verified %}Revoke{% else %}Verify{% endif %}
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">Self</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

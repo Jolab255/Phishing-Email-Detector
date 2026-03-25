@@ -1,0 +1,55 @@
+{% if error %}
+    <div class="alert alert-danger animate-fade-in" role="alert">
+        <i data-lucide="alert-circle" class="me-2"></i> {{ error }}
+    </div>
+{% else %}
+    {% if messages %}
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Sender</th>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for message in messages %}
+                        <tr class="align-middle">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle">
+                                        <i data-lucide="user" class="text-primary" style="width: 16px; height: 16px;"></i>
+                                    </div>
+                                    <span class="fw-medium text-truncate" style="max-width: 200px;">{{ message.sender }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block fw-semibold" style="max-width: 400px;">{{ message.subject }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">{{ message.date }}</span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('analyze', message_id=message.id) }}" class="btn btn-sm btn-primary btn-analyze">
+                                    Analyze
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i data-lucide="inbox" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+            <p class="text-muted">No emails found in your inbox.</p>
+        </div>
+    {% endif %}
+{% endif %}
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>

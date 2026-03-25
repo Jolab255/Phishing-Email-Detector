@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Phishing Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-5 animate-fade-in">
+            <div>
+                <h1 class="fw-bold mb-0">Security <span class="text-primary">Dashboard</span></h1>
+                <p class="text-muted">Comprehensive analysis overview</p>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary d-flex align-items-center gap-2">
+                <i data-lucide="arrow-left"></i> Back to Inbox
+            </a>
+        </div>
+        
+        <div class="row g-4 mb-5 animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="col-md-8">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                        <i data-lucide="shield-check" class="text-success"></i> My Safety Level
+                    </h5>
+                    <div class="d-flex align-items-end gap-3 mb-3">
+                        <h2 class="display-4 fw-bold mb-0">{{ safety_level|round(1) }}%</h2>
+                        <span class="text-muted mb-2">Overall Security Score</span>
+                    </div>
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar {% if safety_level > 80 %}bg-success{% elif safety_level > 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ safety_level }}%;" 
+                             aria-valuenow="{{ safety_level }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <p class="mt-3 text-muted small">Based on your recent email analysis history.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                        <i data-lucide="info" class="text-primary"></i> Quick Stats
+                    </h5>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Analyzed Emails</span>
+                            <span class="fw-bold">{{ analyzed_emails|length }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Risks Blocked</span>
+                            <span class="fw-bold text-danger">{{ analyzed_emails|selectattr('result', 'equalto', 'PHISHING')|list|length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-card p-4 animate-fade-in" style="animation-delay: 0.2s;">
+            <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <i data-lucide="list" class="text-primary"></i> Analysis Log
+            </h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Sender</th>
+                            <th>Subject</th>
+                            <th>Classification</th>
+                            <th>Confidence</th>
+                            <th>Risk Level</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for email in analyzed_emails %}
+                            <tr>
+                                <td><span class="text-truncate d-inline-block" style="max-width: 150px;">{{ email.sender or 'Unknown' }}</span></td>
+                                <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ email.subject or 'No Subject' }}</span></td>
+                                <td>
+                                    {% if email.result == 'PHISHING' %}
+                                        <span class="badge badge-phishing">PHISHING</span>
+                                    {% elif email.result == 'SAFE' %}
+                                        <span class="badge badge-safe">SAFE</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">{{ email.result }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if email.result != 'ERROR' %}
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ email.score * 100 }}%"></div>
+                                            </div>
+                                            <small>{{ (email.score * 100)|round(1) }}%</small>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if email.result == 'PHISHING' %}
+                                        <span class="text-danger small fw-bold">HIGH RISK</span>
+                                    {% elif email.result == 'ERROR' %}
+                                        <span class="text-warning small fw-bold">ERROR</span>
+                                    {% elif email.score >= 0.7 %}
+                                        <span class="text-warning small fw-bold">MEDIUM RISK</span>
+                                    {% else %}
+                                        <span class="text-success small fw-bold">LOW RISK</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="text-muted">{{ email.timestamp.strftime('%Y-%m-%d %H:%M') if email.timestamp else 'N/A' }}</small></td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('analyze', message_id=email.email_id) }}" class="btn btn-sm btn-secondary">
+                                        Details
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Loader Overlay -->
+    <div id="globalLoader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text" id="loaderText">Loading Overview...</div>
+            <div class="loader-subtext" id="loaderSubtext">Compiling your safety statistics.</div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // Global link handler for internal navigation
+        $(document).on('click', 'a', function(e) {
+            const $this = $(this);
+            const href = $this.attr('href');
+            const target = $this.attr('target');
+            
+            if (href && !href.startsWith('http') && !href.startsWith('#') && target !== '_blank' && !e.isDefaultPrevented()) {
+                e.preventDefault();
+                showLoader('Loading...', 'Updating your security overview.');
+                setTimeout(function() {
+                    window.location.href = href;
+                }, 200);
+            }
+        });
+
+        // Hide loader when navigating back
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                hideLoader();
+            }
+        });
+
+        function showLoader(text, subtext) {
+            const $loader = $('#globalLoader');
+            if (text) $loader.find('.loader-text').text(text);
+            if (subtext) $loader.find('.loader-subtext').text(subtext);
+            $loader.addClass('active');
+        }
+
+        function hideLoader() {
+            $('#globalLoader').removeClass('active');
+        }
+    </script>
+</body>
+</html>

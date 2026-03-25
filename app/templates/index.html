@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Phishing Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-5 animate-fade-in">
+            <div>
+                <h1 class="fw-bold mb-0">Security <span class="text-primary">Inbox</span></h1>
+                <p class="text-muted">Welcome, {{ current_user.username }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-dark d-flex align-items-center gap-2 position-relative">
+                    <i data-lucide="bell"></i>
+                    {% set pending_count = current_user.get_pending_count() %}
+                    {% if pending_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                        {{ pending_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% endif %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary d-flex align-items-center gap-2">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                <a href="{{ url_for('manual_analysis') }}" class="btn btn-secondary d-flex align-items-center gap-2">
+                    <i data-lucide="file-search"></i> Manual Analysis
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger d-flex align-items-center gap-2">
+                    <i data-lucide="log-out"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        {% if verification_needed %}
+        <div class="glass-card p-5 text-center animate-fade-in">
+            <div class="mb-4">
+                <i data-lucide="shield-alert" class="text-warning" style="width: 64px; height: 64px;"></i>
+            </div>
+            <h3 class="fw-bold">Verification <span class="text-warning">Required</span></h3>
+            <p class="text-muted mx-auto" style="max-width: 500px;">
+                Your account is currently pending administrator verification. To connect your Gmail account, the administrator must add your email <strong>({{ current_user.email }})</strong> to the Google Cloud Console "Test Users" list.
+            </p>
+            <div class="mt-4 p-3 bg-light rounded-4 d-inline-block">
+                <p class="small text-muted mb-0">Status: <span class="badge bg-warning text-dark">PENDING_ADMIN_ACTION</span></p>
+            </div>
+        </div>
+        {% elif needs_gmail_link %}
+        <div class="glass-card p-5 text-center animate-fade-in">
+            <div class="mb-4">
+                <i data-lucide="mail-plus" class="text-primary" style="width: 64px; height: 64px;"></i>
+            </div>
+            <h3 class="fw-bold">Link Your <span class="text-primary">Gmail</span></h3>
+            <p class="text-muted mx-auto mb-4" style="max-width: 500px;">
+                You are verified! Now you need to connect your Gmail account to start monitoring for phishing threats.
+            </p>
+            <a href="{{ url_for('link_gmail') }}" class="btn btn-primary btn-lg rounded-4 px-5 fw-bold">
+                Connect Gmail Account
+            </a>
+            <div class="mt-4">
+                <p class="small text-muted">Note: A new window will open for Google Authentication.</p>
+            </div>
+        </div>
+        {% elif error %}
+        <div class="glass-card p-5 text-center animate-fade-in">
+            <i data-lucide="alert-circle" class="text-danger mb-3" style="width: 48px; height: 48px;"></i>
+            <h4 class="fw-bold text-danger">Connection Error</h4>
+            <p class="text-muted">{{ error }}</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Try Again</a>
+        </div>
+        {% else %}
+        <div class="glass-card p-0 overflow-hidden animate-fade-in" style="animation-delay: 0.1s;">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white bg-opacity-50">
+                <h5 class="fw-bold mb-0">Recent Emails</h5>
+                <button onclick="refreshMessages()" class="btn btn-sm btn-primary d-flex align-items-center gap-2">
+                    <i data-lucide="refresh-cw" id="refresh-icon"></i> Refresh
+                </button>
+            </div>
+            <div id="messages-container">
+                {% include 'messages_list.html' %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Global Loader -->
+    <div id="globalLoader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text" id="loaderText">Processing...</div>
+            <div class="loader-subtext" id="loaderSubtext">Connecting to secure servers.</div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        lucide.createIcons();
+
+        function refreshMessages() {
+            const icon = document.getElementById('refresh-icon');
+            icon.classList.add('spin');
+            
+            $.get("{{ url_for('refresh_messages') }}", function(data) {
+                $('#messages-container').html(data);
+                lucide.createIcons();
+                icon.classList.remove('spin');
+            }).fail(function() {
+                icon.classList.remove('spin');
+                alert("Failed to refresh messages.");
+            });
+        }
+
+        function showLoader(text, subtext) {
+            const $loader = $('#globalLoader');
+            if (text) $loader.find('.loader-text').text(text);
+            if (subtext) $loader.find('.loader-subtext').text(subtext);
+            $loader.addClass('active');
+        }
+
+        $(document).on('click', 'a', function(e) {
+            const href = $(this).attr('href');
+            if (href && !href.startsWith('http') && !href.startsWith('#') && !$(this).attr('target')) {
+                e.preventDefault();
+                showLoader('Loading...', 'Fetching latest security data.');
+                setTimeout(() => window.location.href = href, 200);
+            }
+        });
+    </script>
+</body>
+</html>

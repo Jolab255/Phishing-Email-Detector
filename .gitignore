@@ -1,0 +1,30 @@
+# Virtual Environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Google Cloud Credentials (SENSITIVE)
+credentials.json
+token.json
+
+# Configuration (SENSITIVE)
+config.py
+instance/
+
+# Database
+*.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Documentation
+Phishing Detector Project Report.pdf
+tokens/
+token.json

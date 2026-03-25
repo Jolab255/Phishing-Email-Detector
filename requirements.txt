@@ -1,0 +1,23 @@
+# Main Framework
+Flask==3.1.2                  # Core web framework for the application server and dashboard
+
+# Database Extensions
+Flask-SQLAlchemy==3.1.1       # ORM (Object Relational Mapper) for handling database interactions
+Flask-Migrate==4.1.0          # Handles database migrations (schema changes)
+Flask-Login==0.6.3            # User session management
+
+# Google Cloud & API Integration
+google-api-python-client==2.188.0  # Official library to access Gmail limits and Gemini AI API
+google-auth-oauthlib==1.2.4        # Handles OAuth 2.0 login flow for Gmail access
+google-auth-httplib2==0.3.0        # Secure HTTP transport for Google Authenticated requests
+
+# Core Dependencies (Automatically installed by the above)
+SQLAlchemy==2.0.46            # The actual SQL toolkit used by Flask-SQLAlchemy
+Werkzeug==3.1.5               # WSGI utility library (underlying engine for Flask)
+Jinja2==3.1.6                 # Templating engine for rendering HTML
+MarkupSafe==3.0.3             # Secure HTML string handling (prevents XSS)
+itsdangerous==2.2.0           # Secure signing/crypto for session cookies
+click==8.3.1                  # Command line interface tool (used by Flask commands)
+blinker==1.9.0                # Signal support for Flask events
+colorama==0.4.6               # Cross-platform colored terminal output
+greenlet==3.3.1               # Lightweight coroutines for async database tasks

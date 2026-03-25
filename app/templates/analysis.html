@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Phishing Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-5 animate-fade-in">
+            <div>
+                <h1 class="fw-bold mb-0">Analysis <span class="text-primary">Report</span></h1>
+                <p class="text-muted">Detailed security breakdown</p>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary d-flex align-items-center gap-2">
+                <i data-lucide="arrow-left"></i> Back to Inbox
+            </a>
+        </div>
+        
+        {% if error %}
+            <div class="glass-card p-5 text-center animate-fade-in">
+                <i data-lucide="alert-triangle" class="text-danger mb-3" style="width: 64px; height: 64px;"></i>
+                <h3 class="fw-bold text-danger">Analysis Failed</h3>
+                <p class="text-muted">{{ error }}</p>
+            </div>
+        {% else %}
+            <div class="row g-4 mb-5 animate-fade-in" style="animation-delay: 0.1s;">
+                <div class="col-md-8">
+                    <div class="glass-card p-4 mb-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <h5 class="fw-bold text-muted mb-1 text-uppercase small">Classification</h5>
+                                <h2 class="fw-bold mb-0">
+                                    {% if result == 'PHISHING' %}
+                                        <span class="text-danger">PHISHING DETECTED</span>
+                                    {% elif result == 'SAFE' %}
+                                        <span class="text-success">SAFE TO OPEN</span>
+                                    {% else %}
+                                        <span class="text-warning">{{ result }}</span>
+                                    {% endif %}
+                                </h2>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="fw-bold text-muted mb-1 text-uppercase small">Confidence</h5>
+                                <h2 class="fw-bold mb-0 text-primary">{{ (confidence * 100)|round(1) }}%</h2>
+                            </div>
+                        </div>
+                        
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar {% if result == 'PHISHING' %}bg-danger{% elif result == 'SAFE' %}bg-success{% else %}bg-warning{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ confidence * 100 }}%">
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if risk_factors %}
+                    <div class="glass-card p-4">
+                        <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                            <i data-lucide="layers" class="text-primary"></i> Risk Factors Identified
+                        </h5>
+                        <div class="d-flex flex-column gap-3">
+                            {% for factor in risk_factors %}
+                            <div class="p-3 rounded-4 bg-light border border-2 animate-fade-in" style="animation-delay: {{ loop.index0 * 0.1 + 0.2 }}s;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold mb-0 text-dark">{{ factor.factor }}</h6>
+                                    <span class="badge {% if factor.severity == 'HIGH' %}badge-phishing{% elif factor.severity == 'MEDIUM' %}badge-warning{% else %}badge-safe{% endif %}">
+                                        {{ factor.severity }}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mb-0">{{ factor.evidence }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="glass-card p-4 mb-4">
+                        <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                            <i data-lucide="mail" class="text-primary"></i> Email Metadata
+                        </h5>
+                        <div class="mb-3">
+                            <label class="text-muted small text-uppercase fw-bold opacity-75">From</label>
+                            <p class="mb-0 fw-medium text-truncate text-dark">{{ sender }}</p>
+                        </div>
+                        <div>
+                            <label class="text-muted small text-uppercase fw-bold opacity-75">Subject</label>
+                            <p class="mb-0 fw-medium text-dark">{{ subject }}</p>
+                        </div>
+                    </div>
+
+                    {% if safety_score %}
+                    <div class="glass-card p-4">
+                        <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                            <i data-lucide="activity" class="text-primary"></i> AI Safety Matrix
+                        </h5>
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">Overall Security</span>
+                                <span class="fw-bold text-success">{{ safety_score.overall|round(1) }}%</span>
+                            </div>
+                            <div class="progress" style="height: 4px;">
+                                <div class="progress-bar bg-success" style="width: {{ safety_score.overall }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if reasoning %}
+            <div class="glass-card p-4 mb-4 animate-fade-in" style="animation-delay: 0.3s;">
+                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                    <i data-lucide="brain" class="text-primary"></i> AI Reasoning
+                </h5>
+                <div class="reasoning-box {% if result == 'SAFE' %}reasoning-box-safe{% elif result == 'PHISHING' %}reasoning-box-phishing{% endif %} m-0">
+                    {{ reasoning|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if content %}
+            <div class="glass-card p-4 animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <i data-lucide="file-text" class="text-primary"></i> Email Content Preview
+                    </h5>
+                    <button class="btn btn-sm btn-secondary" onclick="toggleContent()">
+                        <i data-lucide="eye"></i> Toggle Preview
+                    </button>
+                </div>
+                <div id="emailContent" style="display: none;">
+                    <pre class="mb-0" style="max-height: 400px; overflow-y: auto;">{{ content }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        lucide.createIcons();
+        function toggleContent() {
+            const content = document.getElementById('emailContent');
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Global link handler for internal navigation
+        $(document).on('click', 'a', function(e) {
+            const $this = $(this);
+            const href = $this.attr('href');
+            const target = $this.attr('target');
+            
+            if (href && !href.startsWith('http') && !href.startsWith('#') && target !== '_blank' && !e.isDefaultPrevented()) {
+                e.preventDefault();
+                showLoader('Loading Data...', 'Retrieving your security report details.');
+                setTimeout(function() {
+                    window.location.href = href;
+                }, 200);
+            }
+        });
+
+        // Hide loader when navigating back
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                hideLoader();
+            }
+        });
+
+        function showLoader(text, subtext) {
+            const $loader = $('#globalLoader');
+            if (text) $loader.find('.loader-text').text(text);
+            if (subtext) $loader.find('.loader-subtext').text(subtext);
+            $loader.addClass('active');
+        }
+
+        function hideLoader() {
+            $('#globalLoader').removeClass('active');
+        }
+    </script>
+    <!-- Global Loader Overlay -->
+    <div id="globalLoader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text" id="loaderText">Loading Details...</div>
+            <div class="loader-subtext" id="loaderSubtext">Fetching comprehensive analysis reports.</div>
+        </div>
+    </div>
+</body>
+</html>
